@@ -8,16 +8,21 @@ public enum HexEdgeType
 
 public static class HexMetrics
 {
-    public const float solidFactor = 0.75f;
+    public const float solidFactor = 0.8f;
     public const float blendFactor = 1f - solidFactor;
     
     public const float outerRadius = 10f;
     public const float innerRadius = outerRadius * 0.866025404f;
     
-    public const float elevationStep = 5f;
+    public const float elevationStep = 3f;
     
     public const int terracesPerSlope = 2;
     public const int terraceSteps = terracesPerSlope * 2 + 1;
+    
+    public static Texture2D noiseSource;
+    public const float cellPerturbStrength = 4f;
+    
+    public const float elevationPerturbStrength = 1.5f;
     
     static Vector3[] corners =
     {
@@ -98,5 +103,16 @@ public static class HexMetrics
     {
         float h = step * HexMetrics.horizontalTerraceStepSize;
         return Color.Lerp(a, b, h);
+    }
+    
+    public const float noiseScale = 0.003f;
+    
+    public static Vector4 SampleNoise (Vector3 position)
+    {
+        return noiseSource.GetPixelBilinear
+        (
+            position.x * noiseScale, 
+            position.z * noiseScale
+        );
     }
 }

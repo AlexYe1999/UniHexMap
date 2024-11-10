@@ -61,7 +61,19 @@ public class HexCell : MonoBehaviour
             
             Vector3 position = transform.localPosition;
             position.y = value * HexMetrics.elevationStep;
+            position.y +=
+                (HexMetrics.SampleNoise(position).y * 2f - 1f) *
+                HexMetrics.elevationPerturbStrength;
+            
             transform.localPosition = position;
+        }
+    }
+    
+    public Vector3 Position 
+    {
+        get 
+        {
+            return transform.localPosition;
         }
     }
     
