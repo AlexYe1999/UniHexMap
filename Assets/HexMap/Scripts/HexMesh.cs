@@ -362,7 +362,18 @@ public class HexMesh : MonoBehaviour
         Vector3 left, HexCell leftCell,
         Vector3 right, HexCell rightCell)
     {
-        float t = (float)leftCell.Elevation / Math.Abs(rightCell.Elevation - beginCell.Elevation);
+        float t = 0.0f;
+        float deltaElevation = rightCell.Elevation - beginCell.Elevation;
+
+        if (deltaElevation > 0.0f)
+        {
+            t = leftCell.Elevation / deltaElevation;
+        }
+        else
+        {
+            t = (beginCell.Elevation - leftCell.Elevation) / -deltaElevation;
+        }
+        
         Vector3 midPointV = Vector3.Lerp(Perturb(begin), Perturb(right), t);
         Color midPointColor = Color.Lerp(beginCell.color, rightCell.color, t);
         
@@ -390,7 +401,19 @@ public class HexMesh : MonoBehaviour
         Vector3 left, HexCell leftCell,
         Vector3 right, HexCell rightCell)
     {
-        float t = (float)rightCell.Elevation / Math.Abs(leftCell.Elevation - beginCell.Elevation);
+        
+        float t = 0.0f;
+        float deltaElevation = leftCell.Elevation - beginCell.Elevation;
+
+        if (deltaElevation > 0.0f)
+        {
+            t = rightCell.Elevation / deltaElevation;
+        }
+        else
+        {
+            t = (beginCell.Elevation - rightCell.Elevation) / -deltaElevation;
+        }
+        
         Vector3 midPointV = Vector3.Lerp(Perturb(begin), Perturb(left), t);
         Color midPointColor = Color.Lerp(beginCell.color, leftCell.color, t);
 
