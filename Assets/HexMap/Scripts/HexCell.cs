@@ -43,11 +43,28 @@ public class HexCell : MonoBehaviour
     [SerializeField]
     HexCell[] neighbors;
     
+    Canvas canvas;
     Text coordText;
     
-    public Color color;
+    public Color Color 
+    {
+        get
+        {
+            return color;
+        }
+        set
+        {
+            if (color == value)
+            {
+                return;
+            }
+            color = value;
+            Refresh();
+        }
+    }
+    Color color;
     
-    int elevation;
+    public HexGridChunk chunk;
     
     public int Elevation 
     {
@@ -57,17 +74,23 @@ public class HexCell : MonoBehaviour
         }
         set 
         {
+            if (elevation == value)
+            {
+                return;
+            }
+            
             elevation = value;
             
             Vector3 position = transform.localPosition;
             position.y = value * HexMetrics.elevationStep;
-            position.y +=
-                (HexMetrics.SampleNoise(position).y * 2f - 1f) *
-                HexMetrics.elevationPerturbStrength;
+            position.y += (HexMetrics.SampleNoise(position).y * 2f - 1f) * HexMetrics.elevationPerturbStrength;
             
             transform.localPosition = position;
+            
+            Refresh();
         }
     }
+    int elevation = 0;
     
     public Vector3 Position 
     {
@@ -79,6 +102,7 @@ public class HexCell : MonoBehaviour
     
     private void Awake()
     {
+        canvas = GetComponentInChildren<Canvas>();
         coordText = GetComponentInChildren<Text>();
     }
 
@@ -93,6 +117,23 @@ public class HexCell : MonoBehaviour
         
     }
 
+    void Refresh () 
+    {
+        if (chunk) 
+        {
+            chunk.Refresh();
+            
+            for (int i = 0; i < neighbors.Length; i++) 
+            {
+                HexCell neighbor = neighbors[i];
+                if (neighbor != null && neighbor.chunk != chunk) 
+                {
+                    neighbor.chunk.Refresh();
+                }
+            }
+        }
+    }
+    
     public HexCoordinates Coordinate
     {
         get
@@ -134,5 +175,10 @@ public class HexCell : MonoBehaviour
         (
             elevation, otherCell.elevation
         );
+    }
+    
+    public void ShowUI (bool visible) 
+    {
+        canvas.gameObject.SetActive(visible);
     }
 }
