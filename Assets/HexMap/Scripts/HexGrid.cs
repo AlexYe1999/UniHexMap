@@ -125,8 +125,7 @@ public class HexGrid : MonoBehaviour
     
     public HexCell GetCell (Vector3 position) 
     {
-        HexCoordinates coordinates = 
-            HexCoordinates.FromPosition(transform.InverseTransformPoint(position));
+        HexCoordinates coordinates = HexCoordinates.FromPosition(transform.InverseTransformPoint(position));
         
         return cells[coordinates.X + coordinates.Z * cellCountX + coordinates.Z / 2];
     }

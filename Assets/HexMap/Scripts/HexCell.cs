@@ -32,6 +32,18 @@ public static class HexDirectionExtensions
     {
         return (HexDirection)(((int)direction + 1) % (int)HexDirection.NUM);
     }
+    
+    public static HexDirection Previous2 (this HexDirection direction) 
+    {
+        direction -= 2;
+        return direction >= HexDirection.NE ? direction : (direction + 6);
+    }
+
+    public static HexDirection Next2 (this HexDirection direction) 
+    {
+        direction += 2;
+        return direction <= HexDirection.NW ? direction : (direction - 6);
+    }
 }
 
 public class HexCell : MonoBehaviour
@@ -86,6 +98,15 @@ public class HexCell : MonoBehaviour
             position.y += (HexMetrics.SampleNoise(position).y * 2f - 1f) * HexMetrics.elevationPerturbStrength;
             
             transform.localPosition = position;
+            
+            if (hasOutgoingRiver && elevation < GetNeighbor(outgoingRiver).elevation) 
+            {
+                RemoveOutgoingRiver();
+            }
+            if (hasIncomingRiver && elevation > GetNeighbor(incomingRiver).elevation)
+            {
+                RemoveIncomingRiver();
+            }
             
             Refresh();
         }
@@ -175,6 +196,155 @@ public class HexCell : MonoBehaviour
         (
             elevation, otherCell.elevation
         );
+    }
+    
+    bool hasIncomingRiver, hasOutgoingRiver;
+    HexDirection incomingRiver, outgoingRiver;
+    
+    public bool HasIncomingRiver 
+    {
+        get 
+        {
+            return hasIncomingRiver;
+        }
+    }
+
+    public bool HasOutgoingRiver 
+    {
+        get
+        {
+            return hasOutgoingRiver;
+        }
+    }
+
+    public HexDirection IncomingRiver 
+    {
+        get 
+        {
+            return incomingRiver;
+        }
+    }
+
+    public HexDirection OutgoingRiver
+    {
+        get 
+        {
+            return outgoingRiver;
+        }
+    }
+    
+    public bool HasRiver
+    {
+        get 
+        {
+            return hasIncomingRiver || hasOutgoingRiver;
+        }
+    }
+    
+    public bool HasRiverBeginOrEnd 
+    {
+        get
+        {
+            return hasIncomingRiver != hasOutgoingRiver;
+        }
+    }
+    
+    public bool HasRiverThroughEdge (HexDirection direction) 
+    {
+        return hasIncomingRiver && incomingRiver == direction 
+               || hasOutgoingRiver && outgoingRiver == direction;
+    }
+    
+    public void SetOutgoingRiver (HexDirection direction) 
+    {
+        if (hasOutgoingRiver && outgoingRiver == direction) 
+        {
+            return;
+        }
+        
+        HexCell neighbor = GetNeighbor(direction);
+        if (!neighbor || elevation < neighbor.elevation) 
+        {
+            return;
+        }
+        
+        RemoveOutgoingRiver();
+        if (hasIncomingRiver && incomingRiver == direction) 
+        {
+            RemoveIncomingRiver();
+        }
+        
+        hasOutgoingRiver = true;
+        outgoingRiver = direction;
+        RefreshSelfOnly();
+        
+        neighbor.RemoveIncomingRiver();
+        neighbor.hasIncomingRiver = true;
+        neighbor.incomingRiver = direction.Opposite();
+        neighbor.RefreshSelfOnly();
+    }
+    
+    public void RemoveOutgoingRiver () 
+    {
+        if (!hasOutgoingRiver) 
+        {
+            return;
+        }
+        hasOutgoingRiver = false;
+        RefreshSelfOnly();
+
+        HexCell neighbor = GetNeighbor(outgoingRiver);
+        neighbor.hasIncomingRiver = false;
+        neighbor.RefreshSelfOnly();
+    }
+    
+    public void RemoveIncomingRiver () 
+    {
+        if (!hasIncomingRiver) 
+        {
+            return;
+        }
+        hasIncomingRiver = false;
+        RefreshSelfOnly();
+
+        HexCell neighbor = GetNeighbor(incomingRiver);
+        neighbor.hasOutgoingRiver = false;
+        neighbor.RefreshSelfOnly();
+    }
+    
+    public void RemoveRiver () 
+    {
+        RemoveOutgoingRiver();
+        RemoveIncomingRiver();
+    }
+    
+    void RefreshSelfOnly () 
+    {
+        chunk.Refresh();
+    }
+    
+    public float StreamBedY 
+    {
+        get 
+        {
+            return (elevation + HexMetrics.streamBedElevationOffset) * HexMetrics.elevationStep;
+        }
+    }
+    
+    public float RiverSurfaceY 
+    {
+        get 
+        {
+            return (elevation + HexMetrics.riverSurfaceElevationOffset) * HexMetrics.elevationStep;
+        }
+    }
+
+    public float RiverSurfaceHeight
+    {
+        get
+        {
+            return RiverSurfaceY - StreamBedY; 
+        }
     }
     
     public void ShowUI (bool visible) 
